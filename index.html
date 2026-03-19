@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Liquid Glass Tetris 5000</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1b2735 0, #090a0f 60%);
+      color: #f5f5f5;
+      transition: background 0.6s ease;
+    }
+
+    body.band-1 {
+      background: radial-gradient(circle at top, #1b2735 0, #090a0f 60%);
+    }
+    body.band-2 {
+      background: radial-gradient(circle at top, #241b35 0, #0b0714 60%);
+    }
+    body.band-3 {
+      background: radial-gradient(circle at top, #351b2b 0, #12060a 60%);
+    }
+    body.band-4 {
+      background: radial-gradient(circle at top, #351f1b 0, #120806 60%);
+    }
+    body.band-5 {
+      background: radial-gradient(circle at top, #3a261b 0, #130806 60%);
+    }
+
+    .app {
+      display: flex;
+      gap: 24px;
+      padding: 24px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 220px;
+    }
+
+    .glass-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
+    }
+
+    h1 {
+      font-size: 20px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      opacity: 0.75;
+      margin-top: 4px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.7;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .stat-small {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: #0b1020;
+      background: linear-gradient(135deg, #7cf7ff, #9b8cff);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    }
+
+    canvas {
+      background: rgba(5, 10, 25, 0.9);
+      border-radius: 18px;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 20px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .hint {
+      font-size: 11px;
+      opacity: 0.7;
+      line-height: 1.4;
+    }
+
+    .level-bar {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .level-bar-fill {
+      position: absolute;
+      inset: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #7cf7ff, #ff9bf5);
+      box-shadow: 0 0 12px rgba(124, 247, 255, 0.7);
+      transition: width 0.2s ease;
+    }
+
+    .badge-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .badge {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body class="band-1">
+  <div class="app">
+    <div class="panel">
+      <div class="glass-card">
+        <h1>Liquid Glass Tetris 5000</h1>
+        <p class="subtitle">Offline. 5000 levels. Increasing chaos.</p>
+        <p class="hint" style="margin-top: 8px;">
+          Controls:<br />
+          ← → move • ↑ rotate • ↓ soft drop<br />
+          Space hard drop • P pause
+        </p>
+      </div>
+
+      <div class="glass-card">
+        <div class="stat-label">Level</div>
+        <div class="stat-value" id="level">1</div>
+        <div class="level-bar">
+          <div class="level-bar-fill" id="levelFill"></div>
+        </div>
+        <div class="badge-row">
+          <div class="badge" id="bandLabel">Band I</div>
+          <div class="badge" id="obstacleLabel">Basic</div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="stat-label">Score</div>
+        <div class="stat-value" id="score">0</div>
+        <div class="stat-small" id="linesInfo">Lines this level: 0 / 10</div>
+      </div>
+
+      <div class="glass-card">
+        <div class="stat-label">Best run (local)</div>
+        <div class="stat-small" id="bestInfo">Level 1 • Score 0</div>
+      </div>
+
+      <div class="glass-card">
+        <button class="btn" id="startBtn">Start / Reset</button>
+        <p class="hint" id="statusText" style="margin-top: 8px;">Press Start to play.</p>
+      </div>
+    </div>
+
+    <canvas id="board" width="240" height="480"></canvas>
+  </div>
+
+  <script>
+    // --- Core constants ---
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK = 24;
+
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+
+    const levelEl = document.getElementById("level");
+    const scoreEl = document.getElementById("score");
+    const levelFillEl = document.getElementById("levelFill");
+    const linesInfoEl = document.getElementById("linesInfo");
+    const statusText = document.getElementById("statusText");
+    const startBtn = document.getElementById("startBtn");
+    const bestInfoEl = document.getElementById("bestInfo");
+    const bandLabelEl = document.getElementById("bandLabel");
+    const obstacleLabelEl = document.getElementById("obstacleLabel");
+
+    const COLORS = {
+      I: "#7cf7ff",
+      J: "#9b8cff",
+      L: "#ffb86c",
+      O: "#ffe66d",
+      S: "#7bed9f",
+      T: "#ff9bf5",
+      Z: "#ff6b81"
+    };
+
+    const SHAPES = {
+      I: [[1, 1, 1, 1]],
+      J: [
+        [1, 0, 0],
+        [1, 1, 1]
+      ],
+      L: [
+        [0, 0, 1],
+        [1, 1, 1]
+      ],
+      O: [
+        [1, 1],
+        [1, 1]
+      ],
+      S: [
+        [0, 1, 1],
+        [1, 1, 0]
+      ],
+      T: [
+        [0, 1, 0],
+        [1, 1, 1]
+      ],
+      Z: [
+        [1, 1, 0],
+        [0, 1, 1]
+      ]
+    };
+
+    // --- Game state ---
+    let board;
+    let current;
+    let dropCounter = 0;
+    let lastTime = 0;
+    let gameOver = false;
+    let paused = false;
+
+    let level = 1;
+    let score = 0;
+    let linesClearedThisLevel = 0;
+
+    let bestLevel = 1;
+    let bestScore = 0;
+
+    // --- Helpers ---
+    function createMatrix(w, h) {
+      const m = [];
+      while (h--) m.push(new Array(w).fill(0));
+      return m;
+    }
+
+    function resetBoard() {
+      board = createMatrix(COLS, ROWS);
+    }
+
+    function randomPiece() {
+      const types = Object.keys(SHAPES);
+      const type = types[(types.length * Math.random()) | 0];
+      return {
+        type,
+        matrix: SHAPES[type].map(row => row.slice()),
+        x: (COLS / 2 | 0) - 1,
+        y: 0
+      };
+    }
+
+    function rotate(matrix, dir) {
+      for (let y = 0; y < matrix.length; ++y) {
+        for (let x = 0; x < y; ++x) {
+          [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+        }
+      }
+      if (dir > 0) matrix.forEach(row => row.reverse());
+      else matrix.reverse();
+    }
+
+    function collide(board, piece) {
+      const m = piece.matrix;
+      const o = { x: piece.x, y: piece.y };
+      for (let y = 0; y < m.length; ++y) {
+        for (let x = 0; x < m[y].length; ++x) {
+          if (m[y][x] !== 0 &&
+              (board[y + o.y] && board[y + o.y][x + o.x]) !== 0) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function merge(board, piece) {
+      piece.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value !== 0) {
+            board[y + piece.y][x + piece.x] = piece.type;
+          }
+        });
+      });
+    }
+
+    function clearLines() {
+      let rowCount = 0;
+      outer: for (let y = board.length - 1; y >= 0; --y) {
+        for (let x = 0; x < board[y].length; ++x) {
+          if (board[y][x] === 0) continue outer;
+        }
+        const row = board.splice(y, 1)[0].fill(0);
+        board.unshift(row);
+        ++rowCount;
+        ++y;
+      }
+      if (rowCount > 0) {
+        const points = [0, 40, 100, 300, 1200][rowCount] || 0;
+        score += points * level;
+        linesClearedThisLevel += rowCount;
+        if (linesClearedThisLevel >= 10) {
+          linesClearedThisLevel = 0;
+          level = Math.min(level + 1, 5000);
+          applyLevelBand();
+          statusText.textContent = `Level up! Now level ${level}.`;
+          applyLevelObstacles();
+        }
+        updateUI();
+      }
+    }
+
+    // --- Visuals ---
+    function drawBlock(x, y, type) {
+      const color = COLORS[type] || "#ffffff";
+      const px = x * BLOCK;
+      const py = y * BLOCK;
+
+      const gradient = ctx.createLinearGradient(px, py, px + BLOCK, py + BLOCK);
+      gradient.addColorStop(0, color);
+      gradient.addColorStop(1, "#ffffff");
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(px + 1, py + 1, BLOCK - 2, BLOCK - 2);
+
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.strokeRect(px + 1, py + 1, BLOCK - 2, BLOCK - 2);
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      board.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value !== 0) drawBlock(x, y, value);
+        });
+      });
+
+      if (current) {
+        current.matrix.forEach((row, y) => {
+          row.forEach((value, x) => {
+            if (value !== 0) drawBlock(x + current.x, y + current.y, current.type);
+          });
+        });
+      }
+    }
+
+    // --- Level bands & obstacles ---
+    function getBand(level) {
+      if (level <= 1000) return 1;
+      if (level <= 2000) return 2;
+      if (level <= 3000) return 3;
+      if (level <= 4000) return 4;
+      return 5;
+    }
+
+    function applyLevelBand() {
+      const band = getBand(level);
+      document.body.className = `band-${band}`;
+      const labels = {
+        1: "Band I",
+        2: "Band II",
+        3: "Band III",
+        4: "Band IV",
+        5: "Band V"
+      };
+      bandLabelEl.textContent = labels[band] || "Band";
+    }
+
+    function applyLevelObstacles() {
+      // Simple offline obstacle logic:
+      // every 25 levels, add a "garbage" row with random holes
+      // every 50 levels, add two rows
+      let rowsToAdd = 0;
+      if (level % 50 === 0) rowsToAdd = 2;
+      else if (level % 25 === 0) rowsToAdd = 1;
+
+      if (rowsToAdd > 0) {
+        obstacleLabelEl.textContent = "Garbage rows";
+        for (let r = 0; r < rowsToAdd; r++) {
+          const row = new Array(COLS).fill("X");
+          const holes = 2 + (Math.random() * 3 | 0);
+          for (let i = 0; i < holes; i++) {
+            const idx = (Math.random() * COLS) | 0;
+            row[idx] = 0;
+          }
+          board.shift();
+          board.push(row);
+        }
+      } else if (level % 10 === 0) {
+        obstacleLabelEl.textContent = "Static blocks";
+        // sprinkle a few static blocks
+        for (let i = 0; i < 3; i++) {
+          const x = (Math.random() * COLS) | 0;
+          const y = (Math.random() * 5 | 0) + 10;
+          if (board[y][x] === 0) board[y][x] = "Z";
+        }
+      } else {
+        obstacleLabelEl.textContent = "Basic";
+      }
+    }
+
+    // --- UI & persistence ---
+    function updateUI() {
+      levelEl.textContent = level;
+      scoreEl.textContent = score;
+      const progress = Math.min(linesClearedThisLevel / 10, 1) * 100;
+      levelFillEl.style.width = progress + "%";
+      linesInfoEl.textContent = `Lines this level: ${linesClearedThisLevel} / 10`;
+      bestInfoEl.textContent = `Level ${bestLevel} • Score ${bestScore}`;
+    }
+
+    function loadBest() {
+      const stored = localStorage.getItem("tetris5000_best");
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          bestLevel = data.level || 1;
+          bestScore = data.score || 0;
+        } catch {}
+      }
+    }
+
+    function saveBest() {
+      if (level > bestLevel || (level === bestLevel && score > bestScore)) {
+        bestLevel = level;
+        bestScore = score;
+        localStorage.setItem("tetris5000_best", JSON.stringify({
+          level: bestLevel,
+          score: bestScore
+        }));
+      }
+    }
+
+    // --- Game loop ---
+    function drop() {
+      current.y++;
+      if (collide(board, current)) {
+        current.y--;
+        merge(board, current);
+        clearLines();
+        current = randomPiece();
+        if (collide(board, current)) {
+          gameOver = true;
+          saveBest();
+          updateUI();
+          statusText.textContent = "Game over. Press Start to play again.";
+        }
+      }
+      dropCounter = 0;
+    }
+
+    function update(time = 0) {
+      const delta = time - lastTime;
+      lastTime = time;
+
+      if (!paused && !gameOver) {
+        dropCounter += delta;
+        // Speed: faster with level, but capped
+        const speed = Math.max(60, 900 - (level - 1) * 8);
+        if (dropCounter > speed) drop();
+        drawBoard();
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    function resetGame() {
+      resetBoard();
+      current = randomPiece();
+      dropCounter = 0;
+      lastTime = 0;
+      gameOver = false;
+      paused = false;
+      level = 1;
+      score = 0;
+      linesClearedThisLevel = 0;
+      applyLevelBand();
+      obstacleLabelEl.textContent = "Basic";
+      updateUI();
+      statusText.textContent = "Game running. Good luck.";
+    }
+
+    // --- Input ---
+    document.addEventListener("keydown", e => {
+      if (!current || gameOver) return;
+
+      if (e.code === "ArrowLeft") {
+        current.x--;
+        if (collide(board, current)) current.x++;
+      } else if (e.code === "ArrowRight") {
+        current.x++;
+        if (collide(board, current)) current.x--;
+      } else if (e.code === "ArrowDown") {
+        drop();
+      } else if (e.code === "ArrowUp") {
+        const old = current.matrix.map(r => r.slice());
+        rotate(current.matrix, 1);
+        if (collide(board, current)) current.matrix = old;
+      } else if (e.code === "Space") {
+        while (!collide(board, current)) current.y++;
+        current.y--;
+        merge(board, current);
+        clearLines();
+        current = randomPiece();
+        if (collide(board, current)) {
+          gameOver = true;
+          saveBest();
+          updateUI();
+          statusText.textContent = "Game over. Press Start to play again.";
+        }
+      } else if (e.code === "KeyP") {
+        paused = !paused;
+        statusText.textContent = paused ? "Paused." : "Game running.";
+      }
+    });
+
+    startBtn.addEventListener("click", () => {
+      resetGame();
+    });
+
+    // --- Init ---
+    loadBest();
+    resetGame();
+    update();
+  </script>
+</body>
+</html>
